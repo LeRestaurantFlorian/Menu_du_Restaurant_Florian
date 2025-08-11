@@ -1,19 +1,29 @@
-// backend.js - Serveur Node.js + Express + SQLite pour gérer menu et commandes
+// server.js - Serveur Node.js + Express + SQLite pour gérer menu et commandes
 
 const express = require('express');
 const cors = require('cors');
 const sqlite3 = require('sqlite3').verbose();
+const path = require('path'); // Ajout du module path
 
 const app = express();
-const port = 3000;
+// Utiliser le port fourni par l'environnement de déploiement (Render) ou 3000 en local
+const port = process.env.PORT || 3000;
+
+// IMPORTANT pour la base de données sur Render
+// Si vous utilisez un Disque Persistant, le chemin sera quelque chose comme /var/data/restaurant.db
+// Sinon, cette base de données sera effacée à chaque redéploiement !
+const dbPath = process.env.DATABASE_PATH || './restaurant.db';
 
 app.use(cors());
 app.use(express.json());
 
 // Connexion à la base SQLite
-const db = new sqlite3.Database('./restaurant.db', (err) => {
-  if (err) console.error(err.message);
-  else console.log('Connecté à la base SQLite.');
+const db = new sqlite3.Database(dbPath, (err) => {
+  if (err) {
+    console.error("Erreur de connexion à la base de données :", err.message);
+  } else {
+    console.log('Connecté à la base de données SQLite.');
+  }
 });
 
 // Création des tables si elles n'existent pas
@@ -32,6 +42,13 @@ db.serialize(() => {
   )`);
 });
 
+// --- Routes API (votre code est bon ici, aucune modification nécessaire) ---
+
+// Route de base pour vérifier que le serveur est en ligne
+app.get('/', (req, res) => {
+  res.send('API Restaurant est en ligne !');
+});
+
 // --- Routes Menu ---
 app.get('/menu', (req, res) => {
   db.all('SELECT * FROM menu', [], (err, rows) => {
@@ -44,7 +61,7 @@ app.post('/menu', (req, res) => {
   const { nom, prix, categorie } = req.body;
   db.run('INSERT INTO menu (nom, prix, categorie) VALUES (?, ?, ?)', [nom, prix, categorie], function(err) {
     if (err) return res.status(500).json({ error: err.message });
-    res.json({ id: this.lastID, nom, prix, categorie });
+    res.status(201).json({ id: this.lastID, nom, prix, categorie });
   });
 });
 
@@ -71,7 +88,7 @@ app.post('/commandes', (req, res) => {
   const date = new Date().toISOString();
   db.run('INSERT INTO commandes (date, items) VALUES (?, ?)', [date, JSON.stringify(items)], function(err) {
     if (err) return res.status(500).json({ error: err.message });
-    res.json({ id: this.lastID, date, items });
+    res.status(201).json({ id: this.lastID, date, items });
   });
 });
 
@@ -84,13 +101,5 @@ app.delete('/commandes/:id', (req, res) => {
 
 // Lancer le serveur
 app.listen(port, () => {
-  console.log(`Serveur API Restaurant lancé sur http://localhost:${port}`);
-});
-fetch('http://localhost:3000/menu')
-  .then(res => res.json())
-  .then(data => console.log(data));
-  fetch('http://localhost:3000/commandes', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ items: panier })
+  console.log(`Serveur API Restaurant lancé sur le port ${port}`);
 });
