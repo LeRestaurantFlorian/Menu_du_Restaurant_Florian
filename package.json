@@ -4,14 +4,16 @@
   "description": "API pour un restaurant avec Express et SQLite",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test-api": "node test_api.js"
   },
   "engines": {
-    "node": "22.x"
+    "node": "22.18.0"
   },
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.19.2",
-    "sqlite3": "^5.1.7"
+    "sqlite3": "^5.1.7",
+    "node-fetch": "^3.3.2"
   }
 }

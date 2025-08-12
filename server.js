@@ -1,32 +1,25 @@
-// server.js - Serveur Node.js + Express + SQLite pour gérer menu et commandes
+// server.js - API Restaurant avec SQLite et Express
 
 const express = require('express');
 const cors = require('cors');
 const sqlite3 = require('sqlite3').verbose();
-const path = require('path'); // Ajout du module path
 
 const app = express();
-// Utiliser le port fourni par l'environnement de déploiement (Render) ou 3000 en local
 const port = process.env.PORT || 3000;
 
-// IMPORTANT pour la base de données sur Render
-// Si vous utilisez un Disque Persistant, le chemin sera quelque chose comme /var/data/restaurant.db
-// Sinon, cette base de données sera effacée à chaque redéploiement !
+// Utiliser disque persistant si dispo, sinon fichier local
 const dbPath = process.env.DATABASE_PATH || './restaurant.db';
 
 app.use(cors());
 app.use(express.json());
 
-// Connexion à la base SQLite
+// Connexion à SQLite
 const db = new sqlite3.Database(dbPath, (err) => {
-  if (err) {
-    console.error("Erreur de connexion à la base de données :", err.message);
-  } else {
-    console.log('Connecté à la base de données SQLite.');
-  }
+  if (err) console.error("Erreur DB :", err.message);
+  else console.log(`Base SQLite connectée à ${dbPath}`);
 });
 
-// Création des tables si elles n'existent pas
+// Création des tables
 db.serialize(() => {
   db.run(`CREATE TABLE IF NOT EXISTS menu (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -34,19 +27,11 @@ db.serialize(() => {
     prix REAL,
     categorie TEXT
   )`);
-
   db.run(`CREATE TABLE IF NOT EXISTS commandes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     date TEXT,
     items TEXT
   )`);
-});
-
-// --- Routes API (votre code est bon ici, aucune modification nécessaire) ---
-
-// Route de base pour vérifier que le serveur est en ligne
-app.get('/', (req, res) => {
-  res.send('API Restaurant est en ligne !');
 });
 
 // --- Routes Menu ---
@@ -99,7 +84,12 @@ app.delete('/commandes/:id', (req, res) => {
   });
 });
 
-// Lancer le serveur
+// --- Test route ---
+app.get('/', (req, res) => {
+  res.send('API Restaurant OK 🚀');
+});
+
+// Lancement
 app.listen(port, () => {
   console.log(`Serveur API Restaurant lancé sur le port ${port}`);
 });
